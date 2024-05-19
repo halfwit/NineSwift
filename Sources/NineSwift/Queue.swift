@@ -7,7 +7,7 @@
 import Foundation
 import Network
 
-struct Queue<T> {
+public struct Queue<T> {
     private var elements: [T] = []
     
     mutating func enqueue(_ value: T) {
@@ -29,14 +29,14 @@ struct Queue<T> {
 }
 
 @available(macOS 10.15, *)
-protocol QueueableMessage {
+public protocol QueueableMessage {
     var encodedData: Data {get}
     var minReceiveLength: Int {get}
     var context: NWConnection.ContentContext {get}
 }
 
 @available(macOS 10.15, *)
-struct Enqueued {
+public struct Enqueued {
     let message: QueueableMessage
     let action: (NWProtocolFramer.Message, Data?, NWError?) -> Void
     init(message: QueueableMessage, action: @escaping (NWProtocolFramer.Message, Data?, NWError?) -> Void) {

@@ -37,17 +37,18 @@ let wcb = NWConnection.SendCompletion.contentProcessed { cbe in
 }
 
 @available(macOS 10.15, *)
-protocol PeerConnectionDelegate: AnyObject {
+public protocol PeerConnectionDelegate: AnyObject {
     func connectionReady()
     func connectionFailed()
     func displayAdvertiseError(_ error: NWError)
 }
 
 @available(macOS 10.15, *)
-class PeerConnection {
+public class PeerConnection {
     weak var delegate: PeerConnectionDelegate?
     var connection: NWConnection?
     let name: String
+    let endpoint: NWEndpoint
     let initiatedConnection: Bool
     var sendQueue = Queue<Enqueued>()
     var handles: [Handle] = [Handle]()
@@ -55,23 +56,19 @@ class PeerConnection {
     
     /* Connect to a service */
     @available(macOS 10.15, *)
-    init(name: String, delegate: PeerConnectionDelegate) {
+    public init(name: String, delegate: PeerConnectionDelegate, host: NWEndpoint.Host, port: NWEndpoint.Port) {
         self.delegate = delegate
         self.name = name
         self.initiatedConnection = true
-        
-        guard let endpointPort = NWEndpoint.Port("12345") else { return }
-        let endpoint = NWEndpoint.hostPort(host: NWEndpoint.Host("localhost"), port: endpointPort)
-        //let endpoint = NWEndpoint.hostPort(host: NWEndpoint.Host("127.0.0.1"), port: endpointPort)
-        //let endpoint = NWEndpoint.service(name: name, type: "_altid._tcp.", domain: "local.", interface: nil)
+        self.endpoint = NWEndpoint.hostPort(host: host, port: port)
         connection = NWConnection(to: endpoint, using: applicationServiceParameters())
     }
     
-    func addHandle(handle: Handle) {
+    public func addHandle(handle: Handle) {
         handles.append(handle)
     }
     
-    func cancel() {
+    public func cancel() {
         if let connection = self.connection {
             connection.cancel()
             self.connection = nil
@@ -80,7 +77,7 @@ class PeerConnection {
     
     // Handle starting the peer-to-peer connection for both inbound and outbound connections.
     @available(macOS 10.15, *)
-    func startConnection() {
+    public func startConnection() {
         guard let connection = self.connection else {
             return
         }
@@ -98,10 +95,7 @@ class PeerConnection {
                 if let initiated = self?.initiatedConnection,
                    initiated && error == NWError.posix(.ECONNABORTED) {
                     // Reconnect if the user suspends the app on the nearby device.
-                    guard let endpointPort = NWEndpoint.Port("12345") else { return }
-                    let endpoint = NWEndpoint.hostPort(host: NWEndpoint.Host("192.168.0.248"), port: endpointPort)
-                    //let endpoint = NWEndpoint.service(name: self!.name, type: "_altid._tcp", domain: "local", interface: nil)
-                    let connection = NWConnection(to: endpoint, using: applicationServiceParameters())
+                    let connection = NWConnection(to: self!.endpoint, using: applicationServiceParameters())
                     self?.connection = connection
                     self?.startConnection()
                 } else if let delegate = self?.delegate {
@@ -118,7 +112,7 @@ class PeerConnection {
 
 /* Utility functions */
 @available(macOS 10.15, *)
-extension PeerConnection {
+public extension PeerConnection {
     func connect(uname: String = "") {
         send(Tversion())
         send(Tattach(fid: 0, afid: 0, uname: uname, aname: ""))

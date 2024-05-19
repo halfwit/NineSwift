@@ -8,17 +8,17 @@
 import Foundation
 import Network
 
-var MSIZE: UInt32 = 8192
+public var MSIZE: UInt32 = 8192
 let version = "9P2000 ".data(using: .utf8)!
 
-enum NineErrors: Error {
+public enum NineErrors: Error {
     case decodeError
     case unknownType
     case connectError
     case success
 }
 
-enum nineType: UInt8 {
+public enum nineType: UInt8 {
     case Tversion = 100
     case Tauth = 102
     case Tattach = 104
@@ -49,7 +49,7 @@ enum nineType: UInt8 {
     case invalid = 0
 }
 
-enum fileType: UInt8, Codable {
+public enum fileType: UInt8, Codable {
     case dir = 128
     case append = 64
     case excl = 32
@@ -59,7 +59,7 @@ enum fileType: UInt8, Codable {
     case file = 0
 }
 
-enum nineMode: UInt8, Codable {
+public enum nineMode: UInt8, Codable {
     case read = 0
     case write = 1
     case rdwr = 2
@@ -68,13 +68,13 @@ enum nineMode: UInt8, Codable {
     case rclose = 0x40
 }
 
-struct nineQid: Codable {
+public struct nineQid: Codable {
     var type: fileType
     var version: UInt32
     var path: UInt64
 }
 
-struct nineStat: Codable {
+public struct nineStat: Codable {
     var size: UInt16
     var type: UInt16
     var dev: UInt32
@@ -91,17 +91,17 @@ struct nineStat: Codable {
 
 // Main framing protocol
 @available(macOS 10.15, *)
-class NineProtocol: NWProtocolFramerImplementation {
+public class NineProtocol: NWProtocolFramerImplementation {
     static let definition = NWProtocolFramer.Definition(implementation: NineProtocol.self)
-    static var label: String { return "9p" }
+    public static var label: String { return "9p" }
     
-    required init(framer: NWProtocolFramer.Instance) {}
-    func start(framer: NWProtocolFramer.Instance) -> NWProtocolFramer.StartResult { return .ready }
-    func wakeup(framer: NWProtocolFramer.Instance) { print("In wakeup")}
-    func stop(framer: NWProtocolFramer.Instance) -> Bool { print("In stop"); return true }
-    func cleanup(framer: NWProtocolFramer.Instance) { print("In cleanup")}
+    required public init(framer: NWProtocolFramer.Instance) {}
+    public func start(framer: NWProtocolFramer.Instance) -> NWProtocolFramer.StartResult { return .ready }
+    public func wakeup(framer: NWProtocolFramer.Instance) { print("In wakeup")}
+    public func stop(framer: NWProtocolFramer.Instance) -> Bool { print("In stop"); return true }
+    public func cleanup(framer: NWProtocolFramer.Instance) { print("In cleanup")}
     
-    func handleOutput(framer: NWProtocolFramer.Instance, message: NWProtocolFramer.Message, messageLength: Int, isComplete: Bool) {
+    public func handleOutput(framer: NWProtocolFramer.Instance, message: NWProtocolFramer.Message, messageLength: Int, isComplete: Bool) {
         do {
             try framer.writeOutputNoCopy(length: messageLength)
         } catch {
@@ -109,7 +109,7 @@ class NineProtocol: NWProtocolFramerImplementation {
         }
     }
     
-    func handleInput(framer: NWProtocolFramer.Instance) -> Int {
+    public func handleInput(framer: NWProtocolFramer.Instance) -> Int {
         let headerSize = 7
         var count: UInt32 = 0
         var type: UInt8 = 0
@@ -301,7 +301,7 @@ class NineProtocol: NWProtocolFramerImplementation {
 }
 
 @available(macOS 10.15, *)
-extension NWProtocolFramer.Message {
+public extension NWProtocolFramer.Message {
     /* Set completions here */
     convenience init(count: UInt32, type: UInt8, tag: UInt16, fid: UInt32 = 0, iounit: UInt32 = 0, qids: [nineQid]? = nil, stat: nineStat? = nil) {
         self.init(definition: NineProtocol.definition)
@@ -379,10 +379,10 @@ extension NWProtocolFramer.Message {
 }
 
 @available(macOS 10.15, *)
-struct Tversion: QueueableMessage, Encodable {
-    var minReceiveLength: Int = 13
+public struct Tversion: QueueableMessage, Encodable {
+    public var minReceiveLength: Int = 13
     
-    var encodedData: Data {
+    public var encodedData: Data {
         let count: UInt32 = UInt32(13 + version.count)
         var data = Data(count: 0)
         w32(&data, input: count) // length
@@ -393,14 +393,14 @@ struct Tversion: QueueableMessage, Encodable {
         return data
     }
     
-    var context: NWConnection.ContentContext {
+    public var context: NWConnection.ContentContext {
         return NWConnection.ContentContext(identifier: "Tversion")
     }
 }
 
 @available(macOS 10.15, *)
-struct Tauth: QueueableMessage, Encodable {
-    var minReceiveLength: Int = 20
+public struct Tauth: QueueableMessage, Encodable {
+    public var minReceiveLength: Int = 20
     
     let length: UInt32
     let afid: UInt32
@@ -416,7 +416,7 @@ struct Tauth: QueueableMessage, Encodable {
         self.aname = aname.data(using: .utf8)!
     }
     
-    var encodedData: Data {
+    public var encodedData: Data {
         var data = Data(count: 0)
         w32(&data, input: length)
         w8(&data, input: nineType.Tauth.rawValue)
@@ -427,14 +427,14 @@ struct Tauth: QueueableMessage, Encodable {
         return data
     }
     
-    var context: NWConnection.ContentContext {
+    public var context: NWConnection.ContentContext {
         return NWConnection.ContentContext(identifier: "Tauth")
     }
 }
 
 @available(macOS 10.15, *)
-struct Tattach: QueueableMessage, Encodable {
-    var minReceiveLength: Int = 20
+public struct Tattach: QueueableMessage, Encodable {
+    public var minReceiveLength: Int = 20
     
     let length: UInt32
     let fid: UInt32
@@ -452,7 +452,7 @@ struct Tattach: QueueableMessage, Encodable {
         self.aname = aname.data(using: .utf8)!
     }
     
-    var encodedData: Data {
+    public var encodedData: Data {
         var data = Data(count: 0)
         w32(&data, input: length)
         w8(&data, input: nineType.Tattach.rawValue)
@@ -464,14 +464,14 @@ struct Tattach: QueueableMessage, Encodable {
         return data
     }
     
-    var context: NWConnection.ContentContext {
+    public var context: NWConnection.ContentContext {
         return NWConnection.ContentContext(identifier: "Tattach")
     }
 }
 
 @available(macOS 10.15, *)
-struct Tflush: QueueableMessage, Encodable {
-    var minReceiveLength: Int = 7
+public struct Tflush: QueueableMessage, Encodable {
+    public var minReceiveLength: Int = 7
     
     let tag: UInt16
     let oldtag: UInt16
@@ -480,7 +480,7 @@ struct Tflush: QueueableMessage, Encodable {
         self.oldtag = oldtag
     }
     
-    var encodedData: Data {
+    public var encodedData: Data {
         var data = Data(count: 0)
         w32(&data, input: 11)
         w8(&data, input: nineType.Tflush.rawValue)
@@ -489,14 +489,14 @@ struct Tflush: QueueableMessage, Encodable {
         return data
     }
     
-    var context: NWConnection.ContentContext {
+    public var context: NWConnection.ContentContext {
         return NWConnection.ContentContext(identifier: "Tflush")
     }
 }
 
 @available(macOS 10.15, *)
-struct Twalk: QueueableMessage, Encodable {
-    var minReceiveLength: Int = 22
+public struct Twalk: QueueableMessage, Encodable {
+    public var minReceiveLength: Int = 22
     
     let length: UInt32
     let tag: UInt16
@@ -521,7 +521,7 @@ struct Twalk: QueueableMessage, Encodable {
         self.wnames = tmpwnames
     }
     
-    var encodedData: Data {
+    public var encodedData: Data {
         var data = Data(count: 0)
         w32(&data, input: length)
         w8(&data, input: nineType.Twalk.rawValue)
@@ -535,14 +535,14 @@ struct Twalk: QueueableMessage, Encodable {
         return data
     }
     
-    var context: NWConnection.ContentContext {
+    public var context: NWConnection.ContentContext {
         return NWConnection.ContentContext(identifier: "Twalk")
     }
 }
 
 @available(macOS 10.15, *)
-struct Topen: QueueableMessage, Encodable {
-    var minReceiveLength: Int = 24
+public struct Topen: QueueableMessage, Encodable {
+    public var minReceiveLength: Int = 24
     
     let tag: UInt16
     let fid: UInt32
@@ -554,7 +554,7 @@ struct Topen: QueueableMessage, Encodable {
         self.mode = mode
     }
     
-    var encodedData: Data {
+    public var encodedData: Data {
         var data = Data(count: 0)
         w32(&data, input: 4+1+2+4+1)
         w8(&data, input: nineType.Topen.rawValue)
@@ -564,14 +564,14 @@ struct Topen: QueueableMessage, Encodable {
         return data
     }
     
-    var context: NWConnection.ContentContext {
+    public var context: NWConnection.ContentContext {
         return NWConnection.ContentContext(identifier: "Topen")
     }
 }
 
 @available(macOS 10.15, *)
-struct Tcreate: QueueableMessage, Encodable {
-    var minReceiveLength: Int = 24
+public struct Tcreate: QueueableMessage, Encodable {
+    public var minReceiveLength: Int = 24
     
     let tag: UInt16
     let fid: UInt32
@@ -587,7 +587,7 @@ struct Tcreate: QueueableMessage, Encodable {
         self.mode = mode
     }
     
-    var encodedData: Data {
+    public var encodedData: Data {
         var data = Data(count: 0)
         w32(&data, input: UInt32(name.count + 16))
         w8(&data, input: nineType.Tcreate.rawValue)
@@ -598,14 +598,14 @@ struct Tcreate: QueueableMessage, Encodable {
         w8(&data, input: mode)
         return data
     }
-    var context: NWConnection.ContentContext {
+    public var context: NWConnection.ContentContext {
         return NWConnection.ContentContext(identifier: "Tcreate")
     }
 }
 
 @available(macOS 10.15, *)
-struct Tread: QueueableMessage, Encodable {
-    var minReceiveLength: Int = 13
+public struct Tread: QueueableMessage, Encodable {
+    public var minReceiveLength: Int = 13
     
     let tag: UInt16
     let fid: UInt32
@@ -619,7 +619,7 @@ struct Tread: QueueableMessage, Encodable {
         self.count = count
     }
     
-    var encodedData: Data {
+    public var encodedData: Data {
         var data = Data(count: 0)
         w32(&data, input: 4+1+2+4+8+4)
         w8(&data, input: nineType.Tread.rawValue)
@@ -630,14 +630,14 @@ struct Tread: QueueableMessage, Encodable {
         return data
     }
     
-    var context: NWConnection.ContentContext {
+    public var context: NWConnection.ContentContext {
         return NWConnection.ContentContext(identifier: "Tread")
     }
 }
 
 @available(macOS 10.15, *)
-struct Twrite: QueueableMessage, Encodable {
-    var minReceiveLength: Int = 11
+public struct Twrite: QueueableMessage, Encodable {
+    public var minReceiveLength: Int = 11
     
     let tag: UInt16
     let fid: UInt32
@@ -653,7 +653,7 @@ struct Twrite: QueueableMessage, Encodable {
         self.bytes = bytes
     }
     
-    var encodedData: Data {
+    public var encodedData: Data {
         var data = Data(count: 0)
         w32(&data, input: UInt32(bytes.count + 23))
         w8(&data, input: nineType.Twrite.rawValue)
@@ -664,14 +664,14 @@ struct Twrite: QueueableMessage, Encodable {
         return data
     }
     
-    var context: NWConnection.ContentContext {
+    public var context: NWConnection.ContentContext {
         return NWConnection.ContentContext(identifier: "Twrite")
     }
 }
 
 @available(macOS 10.15, *)
-struct Tclunk: QueueableMessage, Encodable {
-    var minReceiveLength: Int = 7
+public struct Tclunk: QueueableMessage, Encodable {
+    public var minReceiveLength: Int = 7
     
     let tag: UInt16
     let fid: UInt32
@@ -680,7 +680,7 @@ struct Tclunk: QueueableMessage, Encodable {
         self.fid = fid
     }
     
-    var encodedData: Data {
+    public var encodedData: Data {
         var data = Data(count: 0)
         w32(&data, input: 11)
         w8(&data, input: nineType.Tclunk.rawValue)
@@ -689,14 +689,14 @@ struct Tclunk: QueueableMessage, Encodable {
         return data
     }
     
-    var context: NWConnection.ContentContext {
+    public var context: NWConnection.ContentContext {
         return NWConnection.ContentContext(identifier: "Tclunk")
     }
 }
 
 @available(macOS 10.15, *)
-struct Tremove: QueueableMessage, Encodable {
-    var minReceiveLength: Int = 7
+public struct Tremove: QueueableMessage, Encodable {
+    public var minReceiveLength: Int = 7
     
     let tag: UInt16
     let fid: UInt32
@@ -705,7 +705,7 @@ struct Tremove: QueueableMessage, Encodable {
         self.fid = fid
     }
     
-    var encodedData: Data {
+    public var encodedData: Data {
         var data = Data(count: 0)
         w32(&data, input: 11)
         w8(&data, input: nineType.Tremove.rawValue)
@@ -714,14 +714,14 @@ struct Tremove: QueueableMessage, Encodable {
         return data
     }
     
-    var context: NWConnection.ContentContext {
+    public var context: NWConnection.ContentContext {
         return NWConnection.ContentContext(identifier: "Tremove")
     }
 }
 
 @available(macOS 10.15, *)
-struct Tstat: QueueableMessage, Encodable {
-    var minReceiveLength: Int = 52
+public struct Tstat: QueueableMessage, Encodable {
+    public var minReceiveLength: Int = 52
     
     let tag: UInt16
     let fid: UInt32
@@ -730,7 +730,7 @@ struct Tstat: QueueableMessage, Encodable {
         self.fid = fid
     }
     
-    var encodedData: Data {
+    public var encodedData: Data {
         var data = Data(count: 0)
         w32(&data, input: 11)
         w8(&data, input: nineType.Tstat.rawValue)
@@ -739,14 +739,14 @@ struct Tstat: QueueableMessage, Encodable {
         return data
     }
     
-    var context: NWConnection.ContentContext {
+    public var context: NWConnection.ContentContext {
         return NWConnection.ContentContext(identifier: "Tstat")
     }
 }
 
 @available(macOS 10.15, *)
-struct Twstat: QueueableMessage, Encodable {
-    var minReceiveLength: Int = 7
+public struct Twstat: QueueableMessage, Encodable {
+    public var minReceiveLength: Int = 7
     
     let tag: UInt16
     let fid: UInt32
@@ -758,7 +758,7 @@ struct Twstat: QueueableMessage, Encodable {
         self.stat = stat
     }
     
-    var encodedData: Data {
+    public var encodedData: Data {
         var data = Data(count: 0)
         let length = 52 + stat.name.count + stat.uid.count + stat.gid.count + stat.muid.count
         w32(&data, input: UInt32(length))
@@ -783,7 +783,7 @@ struct Twstat: QueueableMessage, Encodable {
         return data
     }
     
-    var context: NWConnection.ContentContext {
+    public var context: NWConnection.ContentContext {
         return NWConnection.ContentContext(identifier: "Twstat")
     }
 }
@@ -917,14 +917,14 @@ func rqid(buffer: UnsafeMutableRawBufferPointer, _ base: inout Int) -> nineQid {
     return nineQid(type: fileType(rawValue: type) ?? .invalid, version: vers, path: path)
 }
 
-extension Data {
+private extension Data {
     public var bytes: [UInt8]
     {
         return [UInt8](self)
     }
 }
 
-extension UInt8 {
+private extension UInt8 {
     var char: Character {
         return Character(UnicodeScalar(self))
     }

@@ -8,7 +8,7 @@
 import Foundation
 
 /* Handle to an open nine file */
-struct Handle {
+public struct Handle {
     let name: String
     var fid: UInt32
     var iounit: UInt32
